@@ -1,66 +1,373 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# LARAVEL DATABASE
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+## POINT UTAMA
 
-## About Laravel
+### 1. Instalasi
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+-   Minimal PHP versi 8 atau lebih,
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+-   Composer versi 2 atau lebih,
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+-   Lalu pada cmd ketikan `composer create-project laravel/laravel=v10.2.3 belajar-laravel-database`.
 
-## Learning Laravel
+---
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+### 2. Laravel Database
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+-   Semua konfigurasi database di Laravel di simpan didalam directory `config/database.php`.
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains over 2000 video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+---
 
-## Laravel Sponsors
+### 3. Membuat database
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the Laravel [Patreon page](https://patreon.com/taylorotwell).
+-   Buat database menggunakan MySQL dengan nama `belajar_laravel_database`,
 
-### Premium Partners
+-   Lalu buat table dengan nama `categories`.
 
-- **[Vehikl](https://vehikl.com/)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Cubet Techno Labs](https://cubettech.com)**
-- **[Cyber-Duck](https://cyber-duck.co.uk)**
-- **[Many](https://www.many.co.uk)**
-- **[Webdock, Fast VPS Hosting](https://www.webdock.io/en)**
-- **[DevSquad](https://devsquad.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel/)**
-- **[OP.GG](https://op.gg)**
-- **[WebReinvent](https://webreinvent.com/?utm_source=laravel&utm_medium=github&utm_campaign=patreon-sponsors)**
-- **[Lendio](https://lendio.com)**
+    ![categories](img/categories.png)
 
-## Contributing
+---
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+### 4. Debug Query
 
-## Code of Conduct
+-   Kita bisa gunakan `DB::listen()` untuk melakukan debugging SQL query yang dibuat di Laravel,
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+-   `DB::listen()` akan dipanggil setiap ada operasi yang dilakukan oleh Laravel Database,
 
-## Security Vulnerabilities
+-   Kita bisa me-log query misalnya, kita daftarkan `DB::listen()` pada Service Provider.
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+    ```PHP
+    public function boot(): void
+    {
+        //
+        DB::listen(function (QueryExecuted $query){
+            Log::info($query->sql);
+        });
+    }
+    ```
 
-## License
+-   Nanti kita bisa melihat apa yang sudah pernah kita log di folder `storage/logs/laravel.log`.
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+---
+
+### 5. CRUD SQL
+
+-   Dengan menggunakan DB Facade, kita bisa melakukan `Raw Query` (Query ke database secara manual),
+
+-   Function Raw SQL
+
+    ![rawSQL](img/rawSQL.png)
+
+-   Kode Raw SQL
+
+    ```PHP
+    protected function setUp(): void // setUp saat query dimulai maka data akan dihapus terlebih dahulu
+    {
+        parent::setUp(); // TODO: Change the autogenerated stub
+        DB::delete('delete from categories');
+    }
+
+    public function testCrud()
+    {
+        DB::insert('insert into categories(id, name, description, created_at) values (?, ?, ? , ?)', [
+            "GADGET", "Gadget", "Gadget Category", "2020-10-10 10:10:10"
+        ]);
+
+        $results = DB::select('select * from categories where id = ?',  ['GADGET']);
+
+        self::assertCount(1, $results);
+        self::assertEquals('GADGET', $results[0]->id);
+        self::assertEquals('Gadget', $results[0]->name);
+        self::assertEquals('Gadget Category', $results[0]->description);
+        self::assertEquals("2020-10-10 10:10:10", $results[0]->created_at);
+    }
+    ```
+
+-   Hasil log akan di simpan di folder `storage/logs.laravel.log`.
+
+---
+
+### 6. Named Binding
+
+-   Laravel mendukung fitur bernama binding, sehingga kita bisa mengganti `?` (tanda tanya) menjadi nama parameter,
+
+-   Dan data bisa kita kirim menggunakan _array_ dengan menggunakan _key_ sesuai nama parameter.
+
+-   kode Named Binding
+
+    ```PHP
+    public function testCrudNamedParameter()
+    {
+        DB::insert('insert into categories(id, name, description, created_at) values (:id, :name, :description , :created_at)', [
+            "id" => "GADGET",
+            "name" => "Gadget",
+            "description" => "Gadget Category",
+            "created_at" => "2020-10-10 10:10:10",
+        ]);
+
+        $results = DB::select('select * from categories where id = ?',  ['GADGET']);
+
+        self::assertCount(1, $results);
+        self::assertEquals('GADGET', $results[0]->id);
+        self::assertEquals('Gadget', $results[0]->name);
+        self::assertEquals('Gadget Category', $results[0]->description);
+        self::assertEquals("2020-10-10 10:10:10", $results[0]->created_at);
+    }
+    ```
+
+---
+
+### 7. Database Transaction
+
+-   Laravel Database memiliki fitur untuk melakukan database transaction secara otomatis,
+
+-   Dengan begitu, tidak perlu lagi melakukan start transaction dan commit/rollback secara manual lagi,
+
+-   Kita bisa menggunakan _function_ `DB::transaction(function)`,
+
+-   Didalam _function_ tersebut kita bisa melakukan perintah database, jika terjadi _error_ secara otomatis transaksi akan di _rollback_.
+
+-   Kode Database Transaction
+
+    ```PHP
+    public function testTransactionSuccess()
+    {
+        DB::transaction(function () {
+            DB::insert('insert into categories(id, name, description, created_at) values (?, ?, ? , ?)', [
+                "GADGET", "Gadget", "Gadget Category", "2020-10-10 10:10:10"
+            ]);
+            DB::insert('insert into categories(id, name, description, created_at) values (?, ?, ? , ?)', [
+                "FOOD", "Food", "Food Category", "2020-10-10 10:10:10"
+            ]);
+        });
+
+        $results = DB::select("select * from categories");
+        self::assertCount(2, $results);
+    }
+    ```
+
+-   Selain menggunakan fitur otomatis, juga bisa melakukan database transaction secara manual,
+
+-   Beberapa _function_ yang bisa digunakan:
+
+    -   `DB::beginTransaction()` untuk memulai transaction,
+    -   `DB::commit()` untuk melakukan commit transaksi,
+    -   `DB::rollBack()` untuk rollback transaksi.
+
+-   Kode Manual Transaksi
+
+    ```PHP
+    public function testTransactionFailed() // test transaksi manual gagal
+    {
+        try {
+            DB::transaction(function () {
+                DB::insert('insert into categories(id, name, description, created_at) values (?, ?, ? , ?)', [
+                    "GADGET", "Gadget", "Gadget Category", "2020-10-10 10:10:10"
+                ]);
+                DB::insert('insert into categories(id, name, description, created_at) values (?, ?, ? , ?)', [
+                    "GADGET", "Food", "Food Category", "2020-10-10 10:10:10"
+                ]);
+            });
+        } catch (QueryException $error) {
+            // expected
+        }
+
+        $results = DB::select("select * from categories");
+        self::assertCount(0, $results);
+
+    }
+
+    public function testMaualTransactionSuccess() // test transaksi manual sukses
+    {
+        try {
+            DB::beginTransaction();
+            DB::insert('insert into categories(id, name, description, created_at) values (?, ?, ? , ?)', [
+                "GADGET", "Gadget", "Gadget Category", "2020-10-10 10:10:10"
+            ]);
+            DB::insert('insert into categories(id, name, description, created_at) values (?, ?, ? , ?)', [
+                "FOOD", "Food", "Food Category", "2020-10-10 10:10:10"
+            ]);
+            DB::commit();
+        } catch (QueryException $error) {
+            DB::rollBack();
+        }
+
+        $results = DB::select("select * from categories");
+        self::assertCount(2, $results);
+    }
+    ```
+
+---
+
+### 8. Database Commands
+
+-   Artisan Laravel memiliki banyak fitur, termasuk perintah database (db). Beberapa perintah yang dapat digunakan antara lain:
+
+    -   `php artisan db`: mengakses terminal database, seperti MySQL,
+    -   `php artisan db:table`: melihat seluruh tabel di database,
+    -   `php artisan db:show`: melihat informasi database,
+    -   `php artisan db:monitor`: memonitor jumlah koneksi di database,
+    -   `php artisan db:seed`: menambah data di database,
+    -   `php artisan db:wipe`: menghapus seluruh tabel di database.
+
+---
+
+### 9. Query Builder
+
+-   Laravel memiliki fitur _Query Builder_, fitur ini sangat memmpermudah kita saat ketika ingin membuat perintah ke database dibandingkan melakukan secara manual menggunakan _Raw SQL_,
+
+-   Untuk membuat _Query Builder_ bisa menggunakan _function_ `DB::table(nama)`.
+
+-   Untuk melakukan insert _Query Builder_, kita bisa menggunakan method dengan prefix insert dengan parameter `assosiative array` dimana _key_ nya adalah kolom, dan value nya adalah nilai yang akan disimpan di database.
+
+-   `insert() `untuk memasukkan data ke database, _throw exception_ jika terjadi _error_ misal duplicate primary key.
+
+-   `insertGetId()` untuk memasukkan dåta ke database, dan mengembalikan primary key yang diset
+    secara auto generate, cocok untuk tabel dengan id auto increment
+
+-   `insertOrIgnore()` untuk memasukkan data ke database, dan jika terjadi _error_, maka akan di ignore
+
+-   kode Query Builder
+
+    ```PHP
+     public function testInsert()
+    {
+        DB::table("categories")->insert([
+            "id" => "GADGET",
+            "name" => "Gadget"
+        ]);
+        DB::table("categories")->insert([
+            "id" => "FOOD",
+            "name" => "Food"
+        ]);
+
+        $result = DB::select("select count(id) as total from categories");
+        self::assertEquals(2, $result[0]->total);
+    }
+    ```
+
+---
+
+### 10. Query builder Select
+
+-   Beberapa perintah _Query Builder Select_:
+
+    -   `get(columns)` untuk mengambil seluruh data, defaultnya semua kolom diambil,
+    -   `first(columns)` untuk mengambil data pertama, defaultnya semua kolom diambil,
+    -   `pluck(columns)` untuk mengambil salah satu kolom saja,
+
+-   Hasil dari _Query Builder Select_ adalah Laravel Collection.
+
+-   Kode Query Builder Select
+
+    ```PHP
+     public function testSelect()
+    {
+        $this->testInsert();
+
+        $collection = DB::table("categories")->select(["id", "name"])->get();
+        self::assertNotNull($collection);
+
+        $collection->each(function ($item) {
+            Log::info(json_encode($item));
+        });
+    }
+    ```
+
+---
+
+### 11. Query builder Where
+
+-   Untuk menambahakan _Where_ di _Query Builder_, bisa menggunakan banyak sekali method.
+
+-   Method Where
+
+    ![methodWhere](img/methodWhere.png)
+
+-   Kode Insert Category
+
+    ```PHP
+    public function insertCategories(){
+        DB::table("categories")->insert([
+            "id" => "SMARTPHONE",
+            "name" => "smartphone",
+            "created_at" => "2024-05-21:15:00",
+        ]);
+        DB::table("categories")->insert([
+            "id" => "FOOD",
+            "name" => "food",
+            "created_at" => "2024-05-21:15:00",
+        ]);
+        DB::table("categories")->insert([
+            "id" => "LAPTOP",
+            "name" => "laptop",
+            "created_at" => "2024-05-21:15:00",
+        ]);
+        DB::table("categories")->insert([
+            "id" => "FASION",
+            "name" => "fasion",
+            "created_at" => "2024-05-21:15:00",
+        ]);
+    }
+    ```
+
+-   Kode Where Method
+
+    ```PHP
+       public function testWhere()
+    {
+        $this->insertCayegories();
+
+        DB::table("categories")->where(function(builder $builder){
+            $builder->where('id', '=', 'SMARTPHONE');
+            $builder->orWhere('id', '=', 'SMARTPHONE');
+        })->get();
+
+        self::assertCount(2, $collection);
+        $collection->each(function($item){
+            Log::info(json_encode($item));
+        });
+    }
+    ```
+
+---
+
+### 12. Query Builder Update
+
+-   Untuk melakukan update, bisa menggunakan method `update(array)`,
+
+-   Dimana parameternya kita bisa mengirim assosiative array yang berisi kolom -> value.
+
+-   kode Query Builder Update
+
+    ```PHP
+    public function testUpdate()
+    {
+        $this->insertCategories();
+
+        DB::table("categories")->where("id", "=", "SMARTPHONE")->update([
+            "name" => "Handphone"
+        ]);
+
+        $collection = DB::table("categories")->where("name", "=", "Handphone")->get();
+        self::assertCount(1, $collection);
+        $collection->each(function ($item) {
+            Log::info(json_encode($item));
+        });
+    }
+    ```
+---
+
+### 13. 
+
+---
+
+## PERTANYAAN & CATATAN TAMBAHAN
+
+-   Tidak ada
+
+---
+
+### KESIMPULAN
+
+-   Pembelajaran Laravel Database mencakup berbagai aspek penting dalam menggunakan database di Laravel. Mengajarkan cara mengonfigurasi database, membuat dan menjalankan migrasi, menggunakan Eloquent ORM untuk berinteraksi dengan tabel, dan membuat query database yang efisien. Selain itu, dijelaskan juga tentang validasi data, relasi antar tabel, dan pengelolaan data dengan CRUD (Create, Read, Update, Delete) operations
